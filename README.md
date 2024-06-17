@@ -22,3 +22,34 @@ Possible options in that file are:
 
 - `disabled` (boolean, defaults to false): whether this policy should be ignored by the scanner.
 - `severity` (CRITICAL, HIGH, MEDIUM or LOW, optional): when set, this overrides the severity defined by the scanner. The `minimum-severity` global setting must be applied **before** this one.
+
+## Scripts
+
+All scripts are automatically applied during CI, unless otherwise stated. They are available for manual use if necessary.
+
+- `generate_config.py`: Generates a single JSON grouping all configuration files. Example config:
+
+```json
+{
+  "scanners": {
+    "iac": {
+      "scanner-version": "0.52.0",
+      "rules-version": "0.11.0",
+      "scanner-dl-links": {
+        "windows": "https://...",
+        "darwin_amd64": "https://...",
+        "darwin_arm64": "https://...",
+        "linux_amd64": "https://...",
+        "linux_arm64": "https://..."
+      }
+    }
+  },
+  "rules": {
+    "iac": {
+      "minimum-severity": "MEDIUM",
+      "rules_disabled": ["AWS-AVD-0002"],
+      "rules": { "AWS-AVD-0001": { "severity": "HIGH" } }
+    }
+  }
+}
+```
