@@ -1,14 +1,13 @@
 """Generates the scanner configuration."""
 
-from dataclasses import asdict, dataclass
-import json
+from dataclasses import dataclass
 import logging
 from pathlib import Path
 import urllib.error
 import urllib.request
 
-from scripts.constants import SCANNER_CONFIG_FILENAME
-from scripts.utils import read_content
+from scripts.generate_config.common import IConfigGenerator, ToJSONMixin
+from scripts.utils.utils import read_content
 
 
 @dataclass
@@ -21,13 +20,13 @@ class ScannerConfig:
 
 
 @dataclass
-class ScannersConfig:
+class ScannersConfig(ToJSONMixin):
     """All scanners configurations."""
 
     iac: ScannerConfig
 
 
-class ScannerConfigGenerator:
+class ScannerConfigGenerator(IConfigGenerator):
     """Generates all scanner-related configurations."""
 
     BASE_TRIVY_RELEASE_URL = "https://github.com/aquasecurity/trivy/releases/download"
@@ -76,9 +75,3 @@ class ScannerConfigGenerator:
         )
         base_scanner_config["iac"].update({"scanner_dl_links": dl_links})
         return ScannersConfig(**base_scanner_config)
-
-
-if __name__ == "__main__":
-    root_path = Path(__file__).parent.parent.resolve()
-    config = ScannerConfigGenerator(root_path / SCANNER_CONFIG_FILENAME).generate()
-    print(json.dumps(asdict(config)))

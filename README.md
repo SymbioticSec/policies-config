@@ -28,7 +28,7 @@ Possible options in that file are:
 All scripts are automatically applied during CI, unless otherwise stated. They are available for manual use if necessary.
 You'll need to install Python and its dependencies using [Poetry](https://python-poetry.org/docs/#installation).
 
-- `poetry run python -m scripts.generate_config`: Generates a single JSON grouping all configuration files. Note that `scripts.rules_config_generator` and `scripts.scanner_config_generator` can also be run individually. Example config:
+- `poetry run python -m scripts.main generate-config`: Generates a single JSON grouping all configuration files. Note that `generate-rules-config` and `generate-scanner-config` can also be run individually. Example config:
 
 ```json
 {

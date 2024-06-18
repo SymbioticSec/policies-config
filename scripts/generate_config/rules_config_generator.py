@@ -1,13 +1,12 @@
 """Generates the rules configuration from the rules files."""
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 import inspect
-import json
 from pathlib import Path
 from typing import Any
 
-from scripts.constants import RULES_FOLDER
-from scripts.utils import read_content
+from scripts.generate_config.common import IConfigGenerator, ToJSONMixin
+from scripts.utils.utils import read_content
 
 
 @dataclass()
@@ -46,13 +45,13 @@ class CategoryRuleConfig:
 
 
 @dataclass
-class RulesConfig:
+class RulesConfig(ToJSONMixin):
     """All rules configurations."""
 
     iac: CategoryRuleConfig
 
 
-class RulesConfigGenerator:
+class RulesConfigGenerator(IConfigGenerator):
     """Generates all rules-related configurations."""
 
     def __init__(self, rules_config_path: Path):
@@ -94,9 +93,3 @@ class RulesConfigGenerator:
         enabled_rules, disabled_rules = self._partition_rules_disabled(rules_configs)
         defaults.update({"rules_disabled": disabled_rules, "rules": enabled_rules})
         return RulesConfig(iac=CategoryRuleConfig(**defaults))
-
-
-if __name__ == "__main__":
-    root_path = Path(__file__).parent.parent.resolve()
-    config = RulesConfigGenerator(root_path / RULES_FOLDER).generate()
-    print(json.dumps(asdict(config)))
