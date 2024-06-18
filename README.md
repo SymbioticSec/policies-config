@@ -34,9 +34,9 @@ You'll need to install Python and its dependencies using [Poetry](https://python
 {
   "scanners": {
     "iac": {
-      "scanner-version": "0.52.0",
-      "rules-version": "0.11.0",
-      "scanner-dl-links": {
+      "scanner_version": "0.52.0",
+      "rules_version": "0.11.0",
+      "scanner_dl_links": {
         "windows": "https://...",
         "darwin_amd64": "https://...",
         "darwin_arm64": "https://...",
@@ -47,7 +47,7 @@ You'll need to install Python and its dependencies using [Poetry](https://python
   },
   "rules": {
     "iac": {
-      "minimum-severity": "MEDIUM",
+      "minimum_severity": "MEDIUM",
       "rules_disabled": ["AWS-AVD-0002"],
       "rules": { "AWS-AVD-0001": { "severity": "HIGH" } }
     }
