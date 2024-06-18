@@ -1,7 +1,7 @@
 """Scripts entrypoint."""
 
+import argparse
 from pathlib import Path
-import sys
 
 from scripts.generate_config.common import IConfigGenerator
 from scripts.generate_config.generate_config import ConfigGenerator
@@ -20,23 +20,22 @@ def generate_and_print(
 
 
 def main():
-    """Calls the correct script based on the first argument."""
-
-    if len(sys.argv) > 1:
-        root_path = Path(__file__).parent.parent.resolve()
-
-        if sys.argv[1] == "generate-config":
-            generate_and_print(ConfigGenerator, root_path)
-        elif sys.argv[1] == "generate-scanner-config":
-            generate_and_print(
-                ScannerConfigGenerator, root_path / SCANNER_CONFIG_FILENAME
-            )
-        elif sys.argv[1] == "generate-rules-config":
-            generate_and_print(RulesConfigGenerator, root_path / RULES_FOLDER)
-        else:
-            print("Unknown command")
-    else:
-        print("No command given")
+    """Main entry point for script execution."""
+    parser = argparse.ArgumentParser(description="Generate and print configurations.")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers.add_parser("generate-config", help="Generate general configuration")
+    subparsers.add_parser(
+        "generate-scanner-config", help="Generate scanner configuration"
+    )
+    subparsers.add_parser("generate-rules-config", help="Generate rules configuration")
+    args = parser.parse_args()
+    root_path = Path(__file__).parent.parent.resolve()
+    if args.command == "generate-config":
+        generate_and_print(ConfigGenerator, root_path)
+    elif args.command == "generate-scanner-config":
+        generate_and_print(ScannerConfigGenerator, root_path / SCANNER_CONFIG_FILENAME)
+    elif args.command == "generate-rules-config":
+        generate_and_print(RulesConfigGenerator, root_path / RULES_FOLDER)
 
 
 if __name__ == "__main__":
