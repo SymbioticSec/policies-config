@@ -28,6 +28,8 @@ Possible options in that file are:
 All scripts are automatically applied during CI, unless otherwise stated. They are available for manual use if necessary.
 You'll need to install Python and its dependencies using [Poetry](https://python-poetry.org/docs/#installation).
 
+- `poetry run python -m scripts.main download-scanners`: Downloads the Trivy scanner releases for all supported system. Extracts the scanner binary from each archive. Call `clear-scanners` to remove all generated files.
+
 - `poetry run python -m scripts.main generate-config`: Generates a single JSON grouping all configuration files. Note that `generate-rules-config` and `generate-scanner-config` can also be run individually. Example config:
 
 ```json

@@ -1,11 +1,9 @@
 """Generates the scanner configuration."""
 
 from dataclasses import dataclass
-import logging
 from pathlib import Path
-import urllib.error
-import urllib.request
 
+from scripts.download_scanners.supported_systems import SupportedSystem
 from scripts.generate_config.common import IConfigGenerator, ToJSONMixin
 from scripts.utils.utils import read_content
 
@@ -29,49 +27,30 @@ class ScannersConfig(ToJSONMixin):
 class ScannerConfigGenerator(IConfigGenerator):
     """Generates all scanner-related configurations."""
 
-    BASE_TRIVY_RELEASE_URL = "https://github.com/aquasecurity/trivy/releases/download"
+    # TODO: Update the URL to the actual S3 bucket URL
+    BASE_SCANNERS_URL = "https://s3.../scanners"
 
     def __init__(self, scanner_config_path: Path):
         self.scanner_config_path = scanner_config_path
 
-    def _is_url_valid(self, url: str) -> bool:
-        """Checks if the given URL is accessible."""
+    def _get_download_links(self) -> dict[str, str]:
+        """Returns the download links for all supported systems."""
 
-        try:
-            req = urllib.request.Request(url, method="HEAD")
-            resp = urllib.request.urlopen(req)
-            return resp.status == 200
-        except (urllib.error.HTTPError, urllib.error.URLError):
-            return False
-        except Exception as e:  # pylint: disable=broad-except
-            logging.error("Unexpected error while checking URL %s: %s", url, e)
-            return False
-
-    def _get_trivy_download_links(self, version: str) -> dict[str, str]:
-        """Returns the Trivy executable download links for the given version, for all systems."""
-
-        systems = (
-            ("windows", "windows-64bit", "zip"),
-            ("darwin_amd64", "macOS-64bit", "tar.gz"),
-            ("darwin_arm64", "macOS-ARM64", "tar.gz"),
-            ("linux_amd64", "Linux-64bit", "tar.gz"),
-            ("linux_arm64", "Linux-ARM64", "tar.gz"),
-        )
-        links = {
-            label: f"{self.BASE_TRIVY_RELEASE_URL}/v{version}/trivy_{version}_{system}.{ext}"
-            for label, system, ext in systems
+        return {
+            system.value: f"{self.BASE_SCANNERS_URL}/{system.value}/trivy.exe"
+            for system in SupportedSystem
         }
-        for system, url in links.items():
-            if not self._is_url_valid(url):
-                raise ValueError(f"Invalid url for system {system}: {url}")
-        return links
+
+    def get_scanner_version(self) -> str:
+        """Reads the scanner version from the configuration file."""
+
+        return read_content(self.scanner_config_path)["iac"]["scanner_version"]
 
     def generate(self) -> ScannersConfig:
         """Reads, processes and returns the scanner configuration."""
 
         base_scanner_config = read_content(self.scanner_config_path)
-        dl_links = self._get_trivy_download_links(
-            base_scanner_config["iac"]["scanner_version"]
+        base_scanner_config["iac"].update(
+            {"scanner_dl_links": self._get_download_links()}
         )
-        base_scanner_config["iac"].update({"scanner_dl_links": dl_links})
         return ScannersConfig(**base_scanner_config)
