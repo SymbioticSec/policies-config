@@ -52,10 +52,13 @@ class ScannerDownloader:
         Returns the path to the extracted scanner.
         """
 
-        exec_name = TRIVY_RELEASES[system].binary_name
+        binary_ext = TRIVY_RELEASES[system].binary_ext
         extractor = get_extractor_from_extension("".join(archive_path.suffixes))
         return extractor.extract(
-            archive_path, exec_name, self.SCANNER_DIR / system.value
+            archive_path,
+            f"trivy{binary_ext}",
+            self.SCANNER_DIR,
+            f"scanner_{system.value}{binary_ext}",
         )
 
     def extract_all_scanners(self) -> Path:

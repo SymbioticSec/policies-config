@@ -12,7 +12,13 @@ class IArchiveExtractor(ABC):
     extension: str
 
     @abstractmethod
-    def extract(self, archive_path: Path, filename: str, dest_dir: Path) -> Path:
+    def extract(
+        self,
+        archive_path: Path,
+        filename: str,
+        dest_dir: Path,
+        new_filename: str | None = None,
+    ) -> Path:
         """Extracts the archive at the given path to the destination directory."""
 
         if not dest_dir.exists():
@@ -24,10 +30,19 @@ class ZipExtractor(IArchiveExtractor):
 
     extension = ".zip"
 
-    def extract(self, archive_path: Path, filename: str, dest_dir: Path) -> Path:
+    def extract(
+        self,
+        archive_path: Path,
+        filename: str,
+        dest_dir: Path,
+        new_filename: str | None = None,
+    ) -> Path:
         super().extract(archive_path, filename, dest_dir)
+
         with zipfile.ZipFile(archive_path, "r") as archive:
             archive.extract(filename, dest_dir)
+        if new_filename is not None:
+            (dest_dir / filename).rename(dest_dir / new_filename)
         return dest_dir / filename
 
 
@@ -36,10 +51,21 @@ class TarGzExtractor(IArchiveExtractor):
 
     extension = ".tar.gz"
 
-    def extract(self, archive_path: Path, filename: str, dest_dir: Path) -> Path:
+    def extract(
+        self,
+        archive_path: Path,
+        filename: str,
+        dest_dir: Path,
+        new_filename: str | None = None,
+    ) -> Path:
         super().extract(archive_path, filename, dest_dir)
+        if new_filename is None:
+            new_filename = filename
+
         with tarfile.open(archive_path, "r:gz") as archive:
-            archive.extract(filename, dest_dir)
+            file = archive.extractfile(filename)
+            with open(dest_dir / new_filename, "wb") as dest_file:
+                dest_file.write(file.read())
         return dest_dir / filename
 
 
