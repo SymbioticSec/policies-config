@@ -23,7 +23,7 @@ class TrivyRelease:
     system: SupportedSystem
     system_label: str
     ext: str
-    binary_name: str
+    binary_ext: str = ""
 
     def get_release_url(self, version: str):
         """Returns the Trivy release URL for the given system and version."""
@@ -36,18 +36,18 @@ class TrivyRelease:
 
 TRIVY_RELEASES = {
     SupportedSystem.WINDOWS: TrivyRelease(
-        SupportedSystem.WINDOWS, "windows-64bit", "zip", "trivy.exe"
+        SupportedSystem.WINDOWS, "windows-64bit", "zip", ".exe"
     ),
     SupportedSystem.DARWIN_AMD64: TrivyRelease(
-        SupportedSystem.DARWIN_AMD64, "macOS-64bit", "tar.gz", "trivy"
+        SupportedSystem.DARWIN_AMD64, "macOS-64bit", "tar.gz"
     ),
     SupportedSystem.DARWIN_ARM64: TrivyRelease(
-        SupportedSystem.DARWIN_ARM64, "macOS-ARM64", "tar.gz", "trivy"
+        SupportedSystem.DARWIN_ARM64, "macOS-ARM64", "tar.gz"
     ),
     SupportedSystem.LINUX_AMD64: TrivyRelease(
-        SupportedSystem.LINUX_AMD64, "Linux-64bit", "tar.gz", "trivy"
+        SupportedSystem.LINUX_AMD64, "Linux-64bit", "tar.gz"
     ),
     SupportedSystem.LINUX_ARM64: TrivyRelease(
-        SupportedSystem.LINUX_ARM64, "Linux-ARM64", "tar.gz", "trivy"
+        SupportedSystem.LINUX_ARM64, "Linux-ARM64", "tar.gz"
     ),
 }
