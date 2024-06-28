@@ -1,0 +1,44 @@
+name: Release config & scanners
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - scanner_config.yml
+      - rules-config/**
+
+jobs:
+  release:
+    name: "Release configuration & scanners"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "poetry"
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Generate configuration
+        run: poetry run python -m scripts.main generate-config > config.json
+
+      - name: Download scanners
+        run: poetry run python -m scripts.main download-scanners
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          title: "Release configuration & scanners"
+          prerelease: false
+          files: |
+            config.json
+            output/scanners/*

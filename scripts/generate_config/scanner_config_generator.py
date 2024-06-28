@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from scripts.download_scanners.supported_systems import SupportedSystem
+from scripts.download_scanners.supported_systems import TRIVY_RELEASES, SupportedSystem
 from scripts.generate_config.common import IConfigGenerator, ToJSONMixin
 from scripts.utils.utils import read_content
 
@@ -27,8 +27,9 @@ class ScannersConfig(ToJSONMixin):
 class ScannerConfigGenerator(IConfigGenerator):
     """Generates all scanner-related configurations."""
 
-    # TODO: Update the URL to the actual S3 bucket URL
-    BASE_SCANNERS_URL = "https://s3.../scanners"
+    BASE_SCANNERS_URL = (
+        "https://github.com/SymbioticSec/policies-config/releases/download/latest"
+    )
 
     def __init__(self, scanner_config_path: Path):
         self.scanner_config_path = scanner_config_path
@@ -37,7 +38,10 @@ class ScannerConfigGenerator(IConfigGenerator):
         """Returns the download links for all supported systems."""
 
         return {
-            system.value: f"{self.BASE_SCANNERS_URL}/{system.value}/trivy.exe"
+            system.value: (
+                f"{self.BASE_SCANNERS_URL}"
+                f"/scanner_{system.value}{TRIVY_RELEASES[system].binary_ext}"
+            )
             for system in SupportedSystem
         }
 
