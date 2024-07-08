@@ -81,5 +81,9 @@ class ScannerDownloader:
     def clear_outputs(cls):
         """Deletes all downloaded archives and extracted scanners."""
 
-        if cls.OUTPUT_DIR.exists():
+        if cls.ARCHIVE_DIR.exists():
+            shutil.rmtree(cls.ARCHIVE_DIR)
+        if cls.SCANNER_DIR.exists():
+            shutil.rmtree(cls.SCANNER_DIR)
+        if cls.OUTPUT_DIR.exists() and not any(cls.OUTPUT_DIR.iterdir()):
             shutil.rmtree(cls.OUTPUT_DIR)

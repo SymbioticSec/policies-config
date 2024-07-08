@@ -8,6 +8,7 @@ from scripts.generate_config.common import IConfigGenerator
 from scripts.generate_config.generate_config import ConfigGenerator
 from scripts.generate_config.rules_config_generator import RulesConfigGenerator
 from scripts.generate_config.scanner_config_generator import ScannerConfigGenerator
+from scripts.generate_static_data.generate_static_data import StaticPolicyDataGenerator
 from scripts.utils.constants import RULES_FOLDER, SCANNER_CONFIG_FILENAME
 
 
@@ -33,6 +34,11 @@ def main():
     subparsers.add_parser(
         "clear-scanners", help="Delete all downloaded scanners and archives"
     )
+    static_data_parser = subparsers.add_parser("generate-static-data", help="Generate static data")
+    static_data_parser.add_argument('path', type=str, help='Path for static data generation')
+    subparsers.add_parser(
+        "clear-static-data", help="Delete all generated static data files"
+    )
 
     args = parser.parse_args()
     root_path = Path(__file__).parent.parent.resolve()
@@ -52,6 +58,13 @@ def main():
     elif args.command == "clear-scanners":
         ScannerDownloader.clear_outputs()
         print("Scanners cleared")
+
+    elif args.command == "generate-static-data":
+        StaticPolicyDataGenerator().generate_all_policies(Path(args.path))
+        print("Static data generated")
+    elif args.command == "clear-static-data":
+        StaticPolicyDataGenerator.clear_outputs()
+        print("Static data cleared")
 
 
 if __name__ == "__main__":
