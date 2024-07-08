@@ -25,8 +25,9 @@ Possible options in that file are:
 
 ## Scripts
 
-All scripts are automatically applied during CI, unless otherwise stated. They are available for manual use if necessary.
 You'll need to install Python and its dependencies using [Poetry](https://python-poetry.org/docs/#installation).
+
+**The following scripts are automatically applied during CI, but are available for manual use.**
 
 - `poetry run python -m scripts.main download-scanners`: Downloads the Trivy scanner releases for all supported system. Extracts the scanner binary from each archive. Call `clear-scanners` to remove all generated files.
 
@@ -56,3 +57,7 @@ You'll need to install Python and its dependencies using [Poetry](https://python
   }
 }
 ```
+
+**The following scripts are available for manual use.**
+
+- `poetry run python -m scripts.main generate-static-data <path>`: Generates static data for all policies in the given directory. More information in the [static data README](scripts/generate_static_data/README.md).
