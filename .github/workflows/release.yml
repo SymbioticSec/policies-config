@@ -2,11 +2,9 @@ name: Release config & scanners
 
 on:
   push:
-    branches: [main]
-    paths:
-      - scanner_config.yml
-      - rules-config/**
-
+    tags:
+      - "*"
+  
 jobs:
   release:
     name: "Release configuration & scanners"
@@ -33,12 +31,7 @@ jobs:
       - name: Download scanners
         run: poetry run python -m scripts.main download-scanners
 
-      - uses: "marvinpinto/action-automatic-releases@latest"
+      - uses: AButler/upload-release-assets@v3.0
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "latest"
-          title: "Release configuration & scanners"
-          prerelease: false
-          files: |
-            config.json
-            output/scanners/*
+          files: "config.json;output/scanners/*"
+          repo-token: ${{ github.token }}
