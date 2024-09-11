@@ -1,9 +1,12 @@
 name: Release config & scanners
 
 on:
-  push:
-    tags:
-      - "*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to deploy"
+        required: true
+        type: string
   
 jobs:
   release:
@@ -35,3 +38,4 @@ jobs:
         with:
           files: "config.json;output/scanners/*"
           repo-token: ${{ github.token }}
+          release-tag: ${{ inputs.version }}
