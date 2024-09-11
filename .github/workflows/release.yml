@@ -1,17 +1,15 @@
 name: Release config & scanners
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "Version to deploy"
-        required: true
-        type: string
+  push:
+    tags:
+      - "*"
   
 jobs:
   release:
     name: "Release configuration & scanners"
     runs-on: ubuntu-latest
+    permissions: write-all
 
     steps:
       - uses: actions/checkout@v2
@@ -33,9 +31,13 @@ jobs:
 
       - name: Download scanners
         run: poetry run python -m scripts.main download-scanners
+        
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get install gh
 
-      - uses: AButler/upload-release-assets@v3.0
-        with:
-          files: "config.json;output/scanners/*"
-          repo-token: ${{ github.token }}
-          release-tag: ${{ inputs.version }}
+      - name: Upload assets
+        run: |
+          gh release upload --clobber ${{ github.ref_name }} config.json output/scanners/*
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
