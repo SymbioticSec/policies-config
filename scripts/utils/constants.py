@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-
 SCANNER_CONFIG_FILENAME = "scanner_config.yml"
 RULES_FOLDER = "rules-config"
 # Should be updated if this file is moved

@@ -1,11 +1,16 @@
-#  Build Go
+# Base Go image
 FROM golang:1.23-alpine AS go-builder
+
+# Compile the Go binary
+WORKDIR /usr/src/
+COPY ./scripts-go/download-rules.go /usr/src/
+RUN go build -o download-rules download-rules.go
 
 # Build final image
 FROM python:3.12-slim-bookworm
 
-# Copy Go binary from the Go builder stage
-COPY --from=go-builder /usr/local/go/ /usr/local/go/
+# Copy the binary to the final image
+COPY --from=go-builder /usr/src/download-rules /usr/src/app/bin/download-rules
 
 # Update the PATH to include Go binaries
 ENV PATH="/usr/local/go/bin:${PATH}"
