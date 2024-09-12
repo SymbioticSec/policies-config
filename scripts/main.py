@@ -2,6 +2,7 @@
 
 import argparse
 
+from scripts.clone_trivy_checks.commands import CloneTrivyChecksCommand
 from scripts.command.command_registry import CommandRegistry
 from scripts.download_scanners.commands import (
     ClearScannersCommand,
@@ -29,6 +30,7 @@ def main():
     registry.register("clear-scanners", ClearScannersCommand)
     registry.register("generate-static-data", GenerateStaticDataCommand)
     registry.register("clear-static-data", ClearStaticDataCommand)
+    registry.register("clone-trivy-checks", CloneTrivyChecksCommand)
 
     parser = argparse.ArgumentParser(description="Generate and print configurations.")
     registry.add_to_parser(parser)
