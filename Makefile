@@ -4,7 +4,7 @@ clone-trivy-checks: # Clone trivy checks repository
 	poetry run python -m scripts.main clone-trivy-checks
 
 generate-config: # Generate configuration
-	poetry run python -m scripts.main generate-config
+	poetry run python -m scripts.main generate-config > config.json
 
 download-scanners: # Download scanners
 	poetry run python -m scripts.main download-scanners
@@ -14,7 +14,7 @@ generate-ide-static-data: clone-trivy-checks # Generate static data for ide plug
 	zip -j iac_rule_remediations.zip output/static-data/*
 
 download-rules: clone-trivy-checks # Download rules
-	@mkdir -p output
+	mkdir -p output
 	./bin/download-rules trivy-checks/checks/cloud > output/rules.json
 
 run-all: generate-config download-scanners generate-ide-static-data download-rules # Run all the scripts
