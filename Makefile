@@ -11,7 +11,7 @@ run-all: # Run all the scripts
 	zip -j iac_rules_remediations.zip output/static-data/*
 
 
-relase: run-all # Run all the scripts and upload the assets
+release: run-all # Run all the scripts and upload the assets
 	gh release upload --clobber $(GITHUB_TAG) config.json output/scanners/* iac_rules_remediations.zip	
 
 .SILENT: all run-all release
