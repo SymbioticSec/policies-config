@@ -15,7 +15,7 @@ generate-ide-static-data: clone-trivy-checks # Generate static data for ide plug
 
 download-rules: clone-trivy-checks # Download rules
 	mkdir -p output
-	./bin/download-rules trivy-checks/checks/cloud > output/rules.json
+	./bin/download-rules trivy-checks/checks > output/rules.json
 
 run-all: generate-config download-scanners generate-ide-static-data download-rules # Run all the scripts
 
