@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"go/ast"
@@ -11,7 +12,7 @@ import (
 	"strings"
 )
 
-// RuleData represents the extracted data from scan.Rule
+// RuleData represents the extracted data from scan.Rule or Rego METADATA
 type RuleData struct {
 	AVDID       string `json:"AVDID"`
 	Provider    string `json:"Provider"`
@@ -35,7 +36,14 @@ func parseRule(node *ast.CompositeLit) RuleData {
 			continue
 		}
 
-		key := kv.Key.(*ast.Ident).Name
+		key := ""
+		switch k := kv.Key.(type) {
+		case *ast.Ident:
+			key = k.Name
+		default:
+			continue
+		}
+
 		switch key {
 		case "AVDID":
 			rule.AVDID = getStringValue(kv.Value)
@@ -54,7 +62,7 @@ func parseRule(node *ast.CompositeLit) RuleData {
 		case "Explanation":
 			rule.Explanation = getStringValue(kv.Value)
 		case "Severity":
-			rule.Severity = getIdentifierOrString(kv.Value, "severity.", "")
+			rule.Severity = normalizeSeverity(getIdentifierOrString(kv.Value, "severity.", ""))
 		case "Deprecated":
 			rule.Deprecated = getBoolValue(kv.Value)
 		}
@@ -103,6 +111,11 @@ func getBoolValue(expr ast.Expr) bool {
 	return false
 }
 
+// normalizeSeverity normalizes severity strings to have the first letter capitalized
+func normalizeSeverity(sev string) string {
+	return strings.Title(strings.ToLower(sev))
+}
+
 // parseFile parses a Go source file and extracts scan.Rule definitions
 func parseFile(filename string) ([]RuleData, error) {
 	fset := token.NewFileSet()
@@ -119,7 +132,7 @@ func parseFile(filename string) ([]RuleData, error) {
 		if compLit, ok := n.(*ast.CompositeLit); ok {
 			// Check if it's part of a scan.Rule assignment
 			if typ, ok := compLit.Type.(*ast.SelectorExpr); ok {
-				if typ.X.(*ast.Ident).Name == "scan" && typ.Sel.Name == "Rule" {
+				if ident, ok := typ.X.(*ast.Ident); ok && ident.Name == "scan" && typ.Sel.Name == "Rule" {
 					rules = append(rules, parseRule(compLit))
 				}
 			}
@@ -130,26 +143,165 @@ func parseFile(filename string) ([]RuleData, error) {
 	return rules, nil
 }
 
-// walkDirectories traverses the folder structure and processes each Go file
+// parseRegoFile parses a Rego file and extracts METADATA into RuleData
+func parseRegoFile(filename string) ([]RuleData, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var rules []RuleData
+	scanner := bufio.NewScanner(file)
+	inMetadata := false
+	metadata := make(map[string]string)
+	var multilineKey string
+	var multilineValue []string
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		trimmed := strings.TrimSpace(line)
+
+		// Check for the start of METADATA
+		if !inMetadata && strings.HasPrefix(trimmed, "# METADATA") {
+			inMetadata = true
+			continue
+		}
+
+		if inMetadata {
+			if !strings.HasPrefix(trimmed, "#") {
+				// End of METADATA section
+				break
+			}
+
+			// Remove the leading '# ' or '#' from the line
+			lineContent := strings.TrimPrefix(trimmed, "#")
+			lineContent = strings.TrimSpace(lineContent)
+
+			if multilineKey != "" {
+				// Continue collecting multiline value
+				if strings.HasPrefix(lineContent, "|") {
+					// Description starts with '|', continue
+					continue
+				} else if strings.HasPrefix(lineContent, "-") || strings.Contains(lineContent, ":") {
+					// Next key starts, save the current multiline
+					metadata[multilineKey] = strings.Join(multilineValue, "\n")
+					multilineKey = ""
+					multilineValue = nil
+				} else {
+					// Collect multiline content
+					multilineValue = append(multilineValue, strings.TrimSpace(lineContent))
+					continue
+				}
+			}
+
+			// Parse key: value
+			if strings.Contains(lineContent, ":") {
+				parts := strings.SplitN(lineContent, ":", 2)
+				key := strings.TrimSpace(parts[0])
+				value := strings.TrimSpace(parts[1])
+
+				if strings.HasSuffix(value, "|") {
+					// Start of multiline value
+					multilineKey = key
+					multilineValue = []string{}
+					continue
+				}
+
+				// Remove surrounding quotes if present
+				value = strings.Trim(value, `"'`)
+
+				metadata[key] = value
+			}
+		}
+	}
+
+	// Handle any remaining multiline value
+	if multilineKey != "" && len(multilineValue) > 0 {
+		metadata[multilineKey] = strings.Join(multilineValue, "\n")
+	}
+
+	// Map metadata to RuleData
+	rule := RuleData{}
+
+	if val, ok := metadata["avd_id"]; ok {
+		rule.AVDID = val
+	}
+	if val, ok := metadata["provider"]; ok {
+		rule.Provider = val
+	}
+	if val, ok := metadata["service"]; ok {
+		rule.Service = val
+	}
+	if val, ok := metadata["short_code"]; ok {
+		rule.ShortCode = val
+	}
+	if val, ok := metadata["title"]; ok {
+		rule.Summary = val
+	}
+	if val, ok := metadata["recommended_action"]; ok {
+		rule.Resolution = val
+	}
+	if val, ok := metadata["description"]; ok {
+		rule.Explanation = val
+	}
+	if val, ok := metadata["severity"]; ok {
+		rule.Severity = normalizeSeverity(val)
+	}
+
+	// Only add rule if AVDID is present
+	if rule.AVDID != "" {
+		rules = append(rules, rule)
+	}
+
+	return rules, nil
+}
+
+// walkDirectories traverses the folder structure and processes each Go and Rego file
 func walkDirectories(root string) ([]RuleData, error) {
-	var allRules []RuleData
+	ruleMap := make(map[string]RuleData) // Keyed by AVDID
 
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		// Process only Go files
-		if !info.IsDir() && strings.HasSuffix(path, ".go") {
-			rules, err := parseFile(path)
-			if err != nil {
-				return err
+		// Process only Go and Rego files
+		if !info.IsDir() {
+			if strings.HasSuffix(path, ".go") {
+				rules, err := parseFile(path)
+				if err != nil {
+					return fmt.Errorf("error parsing Go file %s: %v", path, err)
+				}
+				for _, rule := range rules {
+					ruleMap[rule.AVDID] = rule // Go rules take precedence
+				}
+			} else if strings.HasSuffix(path, ".rego") {
+				rules, err := parseRegoFile(path)
+				if err != nil {
+					return fmt.Errorf("error parsing Rego file %s: %v", path, err)
+				}
+				for _, rule := range rules {
+					// Only add if AVDID not already present (Go takes precedence)
+					if _, exists := ruleMap[rule.AVDID]; !exists {
+						ruleMap[rule.AVDID] = rule
+					}
+				}
 			}
-			allRules = append(allRules, rules...)
 		}
 		return nil
 	})
 
-	return allRules, err
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert map to slice
+	var allRules []RuleData
+	for _, rule := range ruleMap {
+		allRules = append(allRules, rule)
+	}
+
+	return allRules, nil
 }
 
 func main() {
@@ -162,7 +314,7 @@ func main() {
 	// Get the directory path from the first command-line argument
 	rootDir := os.Args[1]
 
-	// Walk through the directories and gather all scan.Rules
+	// Walk through the directories and gather all scan.Rules and Rego METADATA
 	rules, err := walkDirectories(rootDir)
 	if err != nil {
 		fmt.Println("Error:", err)
