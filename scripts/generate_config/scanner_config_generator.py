@@ -14,7 +14,6 @@ class ScannerConfig:
 
     scanner_version: str
     scanner_dl_links: dict[str, str]
-    rules_version: str | None = None
 
 
 @dataclass

@@ -9,7 +9,7 @@ This repository holds all configurations related to vulnerability scanners, and 
 In the `scanner_config.yml` file:
 
 - Set `scanner-version` to the scanner version to use. Refer to the [Trivy releases](https://github.com/aquasecurity/trivy/releases) to find a list of the existing versions.
-- Set `rules-version` to the policy bundle version to use. Refer to the [Trivy-policies packages](https://github.com/aquasecurity/trivy-checks/pkgs/container/trivy-policies) for a list of possibilities. You can set the version to `0` to always use the latest, although it is not recommended. New changes introduced by a bundle version should be examined before they are accepted.
+- Set `trivy-checks-version` to the policy bundle version to use. Refer to the [Trivy-checks releases](https://github.com/aquasecurity/trivy-checks/releases) for a list of possibilities.
 
 ### Define the minimum severity
 
@@ -38,7 +38,7 @@ You'll need to install Python and its dependencies using [Poetry](https://python
   "scanners": {
     "iac": {
       "scanner_version": "0.52.0",
-      "rules_version": "0.11.0",
+      "trivy_checks_version": "v1.0.1",
       "scanner_dl_links": {
         "windows": "https://...",
         "darwin_amd64": "https://...",
